@@ -8,6 +8,7 @@ use App\Models\OptionModel;
 use App\Models\UserAnswerModel;
 use App\Models\SubjectModel;
 use App\Models\SubjectResultModel;
+use App\Models\PenggunaModel;
 
 class StartTryoutController extends BaseController
 {
@@ -27,7 +28,9 @@ class StartTryoutController extends BaseController
     }
 
     // Halaman utama pengerjaan soal
-   public function index($id_tryout)
+    // Controller StartTryoutController.php
+// Controller: StartTryoutController.php
+public function index($id_tryout)
 {
     // Ambil soal berdasarkan tryout
     $questions = $this->questionModel
@@ -38,12 +41,42 @@ class StartTryoutController extends BaseController
     $tryoutModel = new TryoutModel();
     $tryout = $tryoutModel->find($id_tryout);
 
+    // Ambil data pengguna
+    $penggunaModel = new PenggunaModel();
+    $id_pengguna = 1; // Misalnya ID pengguna 1
+    $pengguna = $penggunaModel->find($id_pengguna); // Ambil data pengguna berdasarkan ID
+
+    // Ambil nama subject untuk soal berdasarkan rentang soal
+    $subjectModel = new SubjectModel();
+    $subjects = $subjectModel->findAll(); // Ambil semua subject (TWK, TIU, TKP)
+
+    // Loop untuk menambahkan pilihan untuk setiap soal
+    foreach ($questions as &$question) {
+        // Ambil pilihan berdasarkan no_soal
+        $question['options'] = $this->optionModel
+            ->join('detail_pertanyaan', 'detail_pertanyaan.id_option = option.id_option')
+            ->where('detail_pertanyaan.no_soal', $question['no_soal'])
+            ->findAll();
+
+        // Tentukan subject berdasarkan rentang soal
+        if ($question['no_soal'] >= 1 && $question['no_soal'] <= 30) {
+            $question['subject'] = 'TWK';
+        } elseif ($question['no_soal'] >= 31 && $question['no_soal'] <= 65) {
+            $question['subject'] = 'TIU';
+        } else {
+            $question['subject'] = 'TKP';
+        }
+    }
+
     // Kirim data ke view
     return view('Tryout/Start', [
-        'questions' => $questions,  
-        'tryout' => $tryout
+        'questions' => $questions,  // Pastikan variabel questions ada
+        'tryout' => $tryout,
+        'pengguna' => $pengguna,    // Pastikan variabel pengguna diteruskan ke view
+        'subjects' => $subjects    // Menambahkan data subject untuk ditampilkan
     ]);
 }
+
 
     // Menyimpan jawaban pengguna
     public function saveAnswer()
@@ -65,7 +98,6 @@ class StartTryoutController extends BaseController
     public function finishTryout($id_pengguna, $id_tryout)
     {
         // Hitung hasil tryout
-        // Logika untuk menghitung jumlah soal yang benar dan hasil akhir
         $questions = $this->questionModel->where('id_tryout', $id_tryout)->findAll();
         $correctAnswers = 0;
         $totalScore = 0;
@@ -83,8 +115,6 @@ class StartTryoutController extends BaseController
                 if ($correctAnswer['point'] > 0) {
                     $correctAnswers++;
                 }
-
-                // Update nilai atau logika lulus
             }
         }
 

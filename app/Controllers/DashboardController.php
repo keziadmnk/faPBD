@@ -187,11 +187,6 @@ public function tryoutPurchase($status = 'Belum')
     ]);
 }
 
-
-
-
-
-
   
     // Method untuk mengubah status pengerjaan tryout ke 'Selesai'
     public function completeTryout($id_purchase)

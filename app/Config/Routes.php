@@ -21,7 +21,8 @@ $routes->get('/dashboard/security', 'DashboardController::security');
 
 $routes->get('/dashboard/user/tryout', 'DashboardController::userTryout');
 $routes->get('/dashboard/user/tryout/(:num)', 'DashboardController::attention/$1');
-$routes->get('/dashboard/start_tryout/(:num)', 'DashboardController::startTryout/$1');
+// $routes->get('/dashboard/start_tryout/(:num)', 'DashboardController::startTryout/$1');
+$routes->get('/dashboard/start_tryout/(:num)', 'StartTryoutController::index/$1');
 
 
 
