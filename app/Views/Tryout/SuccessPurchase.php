@@ -9,7 +9,6 @@
 </head>
 <body class="bg-[#f5f8fa] min-h-screen flex">
   <?= view('components/sidebar', ['pengguna' => $pengguna]) ?>
-   <!-- Main content -->
    <main class="flex-1 p-8">
     <h1 class="text-base font-normal text-gray-900 mb-6">Pembelian tryout berhasil</h1>
     <section class="bg-white rounded-lg p-8 max-w-3xl mx-auto flex flex-col items-center">

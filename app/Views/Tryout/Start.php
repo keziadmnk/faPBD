@@ -11,7 +11,6 @@
   <!-- Sidebar -->
   <?= view('components/sidebar', ['pengguna' => $pengguna]) ?>
 
-  <!-- Main content -->
   <main class="flex-1 p-6 max-w-full overflow-x-hidden relative">
     <div class="max-w-6xl mx-auto">
       <header class="mb-4 flex justify-between items-center">
@@ -19,7 +18,7 @@
         <a href="#" id="lihat-semua-btn" class="text-sm font-semibold text-[#3b9ad9] hover:underline cursor-pointer">Lihat Semua</a>
       </header>
 
-      <!-- Pagination with 110 buttons, scrollable horizontally -->
+      <!-- page dengan 110 tombol, scrollable horizontal -->
       <div id="question-buttons" class="flex gap-1 mb-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 whitespace-nowrap">
         <?php foreach ($questions as $question): ?>
           <button class="bg-white text-gray-900 w-8 h-8 rounded border border-gray-300 font-semibold inline-block px-1" onclick="selectQuestion(<?= $question['no_soal'] ?>)">
@@ -28,7 +27,7 @@
         <?php endforeach; ?>
       </div>
 
-      <!-- Timer and question count -->
+      <!-- Timer dan itungan question -->
       <section class="bg-white rounded-xl p-6 mb-6 flex justify-center items-center text-[#0f293f] font-semibold text-2xl relative">
         <div class="text-center w-full max-w-3xl">
           <span id="timer">1:39:56</span>
@@ -50,7 +49,7 @@
       </article>
     </div>
 
-    <!-- Popup overlay -->
+    <!-- Popup overlay nomor soal -->
     <div id="popup-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
         <header class="flex justify-between items-center mb-4">
