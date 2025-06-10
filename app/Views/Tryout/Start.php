@@ -223,12 +223,13 @@
       
       // Next/Finish button logic
       if (currentIndex === questions.length - 1) {
-        nextBtn.classList.add('hidden');
-        finishBtn.classList.remove('hidden');
-      } else {
-        nextBtn.classList.remove('hidden');
-        finishBtn.classList.add('hidden');
-      }
+  nextBtn.classList.add('hidden');
+  finishBtn.classList.remove('hidden');
+} else {
+  nextBtn.classList.remove('hidden');
+  finishBtn.classList.add('hidden');
+}
+
     }
 
     // Update question button states
@@ -260,50 +261,52 @@
     }
 
     // Finish tryout and save answers
-    function finishTryout() {
-      const answeredCount = Object.keys(userAnswers).length;
-      const totalQuestions = questions.length;
-      
-      const confirmMessage = `Anda telah menjawab ${answeredCount} dari ${totalQuestions} soal.\n\nApakah Anda yakin ingin mengakhiri tryout?`;
-      
-      if (confirm(confirmMessage)) {
-        // Clear timer
-        clearInterval(timerInterval);
-        
-        // Prepare data for submission
-        const formData = new FormData();
-        formData.append('id_pengguna', <?= $pengguna['id_pengguna'] ?>);
-        formData.append('id_tryout', <?= $tryout['id_tryout'] ?>);
-        formData.append('answers', JSON.stringify(userAnswers));
-        
-        // Show loading state
-        const finishBtn = document.getElementById('finish-btn');
-        const originalText = finishBtn.innerHTML;
-        finishBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
-        finishBtn.disabled = true;
-        
-        // Submit answers to server
-        fetch('/dashboard/save_answers', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert('Tryout berhasil diselesaikan!');
-            window.location.href = `/dashboard/user/tryout/<?= $tryout['id_tryout'] ?>`;
-          } else {
-            throw new Error(data.message || 'Terjadi kesalahan');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.');
-          finishBtn.innerHTML = originalText;
-          finishBtn.disabled = false;
-        });
+    // Fungsi untuk mengakhiri tryout dan mengirimkan jawaban ke server
+function finishTryout() {
+  const answeredCount = Object.keys(userAnswers).length;
+  const totalQuestions = questions.length;
+
+  const confirmMessage = `Anda telah menjawab ${answeredCount} dari ${totalQuestions} soal.\n\nApakah Anda yakin ingin mengakhiri tryout?`;
+
+  if (confirm(confirmMessage)) {
+    // Clear timer
+    clearInterval(timerInterval);
+
+    // Persiapkan data untuk dikirimkan
+    const formData = new FormData();
+    formData.append('id_pengguna', <?= $pengguna['id_pengguna'] ?>);
+    formData.append('id_tryout', <?= $tryout['id_tryout'] ?>);
+    formData.append('answers', JSON.stringify(userAnswers));
+
+    // Tampilkan loading state
+    const finishBtn = document.getElementById('finish-btn');
+    const originalText = finishBtn.innerHTML;
+    finishBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+    finishBtn.disabled = true;
+
+    // Kirim jawaban ke server
+    fetch('/dashboard/save_answers', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Tryout berhasil diselesaikan!');
+        window.location.href = '/dashboard/user/tryout/finish/' + <?= $tryout['id_tryout'] ?>;  // Redirect ke halaman finish dengan ID tryout
+      } else {
+        throw new Error(data.message || 'Terjadi kesalahan');
       }
-    }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.');
+      finishBtn.innerHTML = originalText;
+      finishBtn.disabled = false;
+    });
+  }
+}
+
 
     // Handle "Lihat Semua" button
     document.getElementById('lihat-semua-btn').addEventListener('click', function(e) {

@@ -75,7 +75,7 @@
                         <td class="py-3 px-4"><?= $tryoutPurchase['tanggal_mulai'] ?></td>
                         <td class="py-3 px-4"><?= $tryoutPurchase['tanggal_selesai'] ?></td>
                         <td class="py-3 px-4 text-[#3498db] cursor-pointer">
-                             <a href="/dashboard/user/tryout/<?= $tryoutPurchase['id_tryout'] ?>">Lihat Detail</a>
+                            <a href="/dashboard/user/tryout/finish/<?= $tryoutPurchase['id_tryout'] ?>">Lihat Detail</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>

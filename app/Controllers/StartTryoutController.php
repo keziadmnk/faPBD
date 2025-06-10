@@ -103,11 +103,11 @@ class StartTryoutController extends BaseController
         ]);
     }
 
-    // Menyimpan semua jawaban pengguna
+        // Method untuk menyimpan jawaban pengguna
     public function saveAnswers()
     {
         $data = $this->request->getPost();
-        
+
         // Validasi input
         if (!isset($data['id_pengguna'], $data['id_tryout'], $data['answers'])) {
             return $this->response->setJSON([
@@ -165,16 +165,88 @@ class StartTryoutController extends BaseController
                 'success' => true,
                 'message' => 'Jawaban berhasil disimpan!'
             ]);
-
         } catch (\Exception $e) {
             $this->userAnswerModel->transRollback();
-            
+
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
         }
     }
+
+    // Method untuk mengarahkan ke halaman finish
+
+// Method untuk mengarahkan ke halaman finish
+public function finish($id_tryout)
+{
+    // Ambil informasi tryout
+    $tryoutModel = new TryoutModel();
+    $tryout = $tryoutModel->find($id_tryout);
+
+    // Ambil soal yang terkait dengan tryout ini
+    $questions = $this->questionModel
+        ->where('id_tryout', $id_tryout)
+        ->orderBy('no_soal', 'ASC')
+        ->findAll();
+
+    // PERBAIKAN: Ambil id_pengguna dari session atau hardcode seperti di controller lain
+    $penggunaModel = new PenggunaModel();
+    $id_pengguna = session()->get('id_pengguna') ?? 1; // Fallback ke ID 1 jika session kosong
+    
+    // PERBAIKAN: Pastikan kita mendapatkan data pengguna yang lengkap
+    $pengguna = $penggunaModel->find($id_pengguna);
+    
+    // PERBAIKAN: Validasi data pengguna
+    if (!$pengguna) {
+        // Jika pengguna tidak ditemukan, redirect ke dashboard dengan error
+        return redirect()->to('/dashboard')->with('error', 'Data pengguna tidak ditemukan!');
+    }
+
+    // Ambil jawaban pengguna berdasarkan id_pengguna
+    $userAnswerModel = new UserAnswerModel();
+    $answers = $userAnswerModel->where('id_pengguna', $id_pengguna)
+                                ->whereIn('no_soal', array_column($questions, 'no_soal'))
+                                ->findAll();
+
+    // Ambil hasil untuk setiap subject
+    $subjectResultModel = new SubjectResultModel();
+    $subjectResults = $subjectResultModel
+        ->select('subject_result.*, subject.nama_subject as subject_name')
+        ->join('subject', 'subject.id_subject = subject_result.id_subject')
+        ->where('id_tryout', $id_tryout)
+        ->where('id_pengguna', $id_pengguna) // PERBAIKAN: Tambahkan filter berdasarkan pengguna
+        ->findAll();
+
+    // PERBAIKAN: Tambahkan total_soal untuk setiap subject result
+    foreach ($subjectResults as &$result) {
+        switch ($result['subject_name']) {
+            case 'TWK':
+                $result['total_soal'] = 30;
+                break;
+            case 'TIU':
+                $result['total_soal'] = 35;
+                break;
+            case 'TKP':
+                $result['total_soal'] = 45;
+                break;
+            default:
+                $result['total_soal'] = 0;
+        }
+    }
+
+    // Kirim data ke halaman finish view
+    return view('Tryout/Finish', [
+        'tryout' => $tryout,
+        'questions' => $questions,
+        'pengguna' => $pengguna,  // Data pengguna lengkap dengan saldo
+        'answers' => $answers,
+        'subjectResults' => $subjectResults
+    ]);
+}
+
+
+
 
     // Menghitung hasil tryout per subject
     private function calculateResults($id_pengguna, $id_tryout)
@@ -281,10 +353,12 @@ class StartTryoutController extends BaseController
         $questionNumbers = array_column($questions, 'no_soal');
 
         // Ambil jawaban yang sudah ada
-        $answers = $this->userAnswerModel
-            ->where('id_pengguna', $id_pengguna)
-            ->whereIn('no_soal', $questionNumbers)
-            ->findAll();
+       // Ambil jawaban pengguna berdasarkan id_pengguna
+$answers = $this->userAnswerModel
+    ->where('id_pengguna', $id_pengguna)  // Mendapatkan jawaban berdasarkan pengguna
+    ->whereIn('no_soal', array_column($questions, 'no_soal'))  // Memastikan hanya jawaban untuk soal yang ada
+    ->findAll();
+
 
         // Format jawaban untuk frontend
         $formattedAnswers = [];
@@ -297,4 +371,6 @@ class StartTryoutController extends BaseController
             'answers' => $formattedAnswers
         ]);
     }
+
+    
 }
