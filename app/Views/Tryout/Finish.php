@@ -71,9 +71,10 @@
       </table>
 
       <div class="flex justify-center gap-4 mt-6">
-        <button class="bg-green-600 text-white px-6 py-2 rounded text-sm hover:bg-green-700">Selesai</button>
+        <button class="bg-green-600 text-white px-6 py-2 rounded text-sm hover:bg-green-700" onclick="location.href='/dashboard/user/tryout'">Selesai</button>
         <button class="bg-[#3498cb] text-white px-6 py-2 rounded text-sm hover:bg-[#2a7bbf]" onclick="location.href='/dashboard/user/tryout/<?= $tryout['id_tryout'] ?>/results'">Lihat Nilai</button>
       </div>
+      
     </section>
   </main>
 </body>

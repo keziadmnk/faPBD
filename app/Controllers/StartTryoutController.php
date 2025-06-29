@@ -372,5 +372,84 @@ $answers = $this->userAnswerModel
         ]);
     }
 
+    // Method untuk menampilkan hasil tryout lengkap
+    public function showResults($id_tryout)
+    {
+        // Ambil informasi tryout
+        $tryoutModel = new TryoutModel();
+        $tryout = $tryoutModel->find($id_tryout);
+
+        // Ambil data pengguna
+        $penggunaModel = new PenggunaModel();
+        $id_pengguna = session()->get('id_pengguna') ?? 1; // Fallback ke ID 1 jika session kosong
+        $pengguna = $penggunaModel->find($id_pengguna);
+
+        // Validasi data pengguna
+        if (!$pengguna) {
+            return redirect()->to('/dashboard')->with('error', 'Data pengguna tidak ditemukan!');
+        }
+
+        // Ambil hasil untuk setiap subject
+        $subjectResultModel = new SubjectResultModel();
+        $subjectResults = $subjectResultModel
+            ->select('subject_result.*, subject.nama_subject as subject_name, subject.passing_grade')
+            ->join('subject', 'subject.id_subject = subject_result.id_subject')
+            ->where('subject_result.id_tryout', $id_tryout)
+            ->where('subject_result.id_pengguna', $id_pengguna)
+            ->findAll();
+
+        // Tambahkan total_soal untuk setiap subject result
+        foreach ($subjectResults as &$result) {
+            switch ($result['subject_name']) {
+                case 'TWK':
+                    $result['total_soal'] = 30;
+                    break;
+                case 'TIU':
+                    $result['total_soal'] = 35;
+                    break;
+                case 'TKP':
+                    $result['total_soal'] = 45;
+                    break;
+                default:
+                    $result['total_soal'] = 0;
+            }
+        }
+
+        // Ambil data purchase untuk mendapatkan total score dan status kelulusan
+        $tryoutPurchaseModel = new TryoutPurchaseModel();
+        $purchase = $tryoutPurchaseModel
+            ->where('id_tryout', $id_tryout)
+            ->where('id_pengguna', $id_pengguna)
+            ->first();
+
+        // Hitung total score dan status kelulusan
+        $totalScore = $purchase ? $purchase['total_score'] : 0;
+        $overallStatus = $purchase ? $purchase['status_kelulusan_to'] : 'Belum';
+
+        // Simpan atau update data ke database jika belum ada
+        if (!$purchase || $purchase['status_pengerjaan'] !== 'Selesai') {
+            // Jika belum ada data hasil atau status belum selesai, hitung ulang
+            $this->calculateResults($id_pengguna, $id_tryout);
+            
+            // Ambil ulang data purchase yang sudah diupdate
+            $purchase = $tryoutPurchaseModel
+                ->where('id_tryout', $id_tryout)
+                ->where('id_pengguna', $id_pengguna)
+                ->first();
+            
+            $totalScore = $purchase['total_score'];
+            $overallStatus = $purchase['status_kelulusan_to'];
+        }
+
+        // Kirim data ke view HasilTryout
+        return view('Tryout/HasilTryout', [
+            'tryout' => $tryout,
+            'pengguna' => $pengguna,
+            'subjectResults' => $subjectResults,
+            'totalScore' => $totalScore,
+            'overallStatus' => $overallStatus
+        ]);
+    }
+
     
 }

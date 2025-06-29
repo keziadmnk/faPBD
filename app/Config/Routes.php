@@ -16,6 +16,11 @@ $routes->get('/dashboard/complete_tryout/(:num)', 'DashboardController::complete
 $routes->post('/dashboard/buy_tryout/(:num)', 'DashboardController::buyTryout/$1');
 
 $routes->get('/dashboard/help', 'DashboardController::help');
+$routes->get('/dashboard/topuphistory', 'DashboardController::topuphistory');
+$routes->get('/dashboard/voucherhistory', 'DashboardController::voucherhistory');
+$routes->get('/dashboard/tryouthistory', 'DashboardController::tryouthistory');
+
+
 $routes->get('/dashboard/account', 'DashboardController::account');
 $routes->get('/dashboard/security', 'DashboardController::security');
 
@@ -27,6 +32,8 @@ $routes->get('/dashboard/start_tryout/(:num)', 'StartTryoutController::index/$1'
 $routes->post('/dashboard/save_answers', 'StartTryoutController::saveAnswers');
 $routes->get('/dashboard/get_answers/(:num)/(:num)', 'StartTryoutController::getExistingAnswers/$1/$2');
 $routes->get('/dashboard/user/tryout/finish/(:num)', 'StartTryoutController::finish/$1');
+// Route untuk menampilkan hasil tryout
+$routes->get('/dashboard/user/tryout/(:num)/results', 'StartTryoutController::showResults/$1');
 
 
 // $routes->get('/dashboard/tryout_purchase/(:any)', 'DashboardController::tryoutPurchase/$1');

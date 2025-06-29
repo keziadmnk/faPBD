@@ -33,7 +33,7 @@
         <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/12raport.html">
             <span class="text-2xl"> 🏆 </span> Raport
         </a>
-        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/13top-up-history.html">
+        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/topuphistory">
             <span class="text-2xl"> 🪙 </span> Payment
         </a>
         <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/help">

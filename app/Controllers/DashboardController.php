@@ -247,4 +247,44 @@ public function security()
         return $penggunaModel->find($id_pengguna);
     }
 
+    public function topuphistory()
+{
+    // Ambil data pengguna
+    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
+
+    // Menampilkan halaman Help dan mengirimkan data pengguna
+    return view('Payment/TopUpHistory', [
+        'pengguna' => $pengguna  // Kirim data pengguna ke view
+    ]);
+}
+
+    public function voucherhistory()
+{
+    // Ambil data pengguna
+    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
+
+    // Menampilkan halaman Help dan mengirimkan data pengguna
+    return view('Payment/VoucherHistory', [
+        'pengguna' => $pengguna  // Kirim data pengguna ke view
+    ]);
+}
+
+    public function tryouthistory()
+{
+    // Ambil data pengguna
+    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
+
+    // Menampilkan halaman Help dan mengirimkan data pengguna
+    return view('Payment/TryoutHistory', [
+        'pengguna' => $pengguna  // Kirim data pengguna ke view
+    ]);
+}
+
+// Method untuk menampilkan hasil tryout (redirect ke StartTryoutController)
+    public function viewTryoutResults($id_tryout)
+    {
+        // Redirect ke StartTryoutController untuk menampilkan hasil
+        return redirect()->to("/dashboard/user/tryout/{$id_tryout}/results");
+    }
+
 }
