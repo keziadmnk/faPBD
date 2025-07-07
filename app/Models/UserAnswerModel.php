@@ -8,7 +8,7 @@ class UserAnswerModel extends Model
 {
     protected $table = 'user_answer';
     protected $primaryKey = 'id_pengguna';
-    protected $allowedFields = ['id_pengguna', 'no_soal', 'id_option'];
+    protected $allowedFields = ['id_pengguna', 'no_soal', 'id_option', 'id_tryout'];
 
     // Menyimpan jawaban
     public function saveAnswer($data)

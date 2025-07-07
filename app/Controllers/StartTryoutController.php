@@ -134,6 +134,7 @@ class StartTryoutController extends BaseController
             // Hapus jawaban lama jika ada
             $this->userAnswerModel
                 ->where('id_pengguna', $id_pengguna)
+                ->where('id_tryout', $id_tryout)
                 ->whereIn('no_soal', array_keys($answers))
                 ->delete();
 
@@ -142,7 +143,8 @@ class StartTryoutController extends BaseController
                 $this->userAnswerModel->insert([
                     'id_pengguna' => $id_pengguna,
                     'no_soal' => $no_soal,
-                    'id_option' => $id_option
+                    'id_option' => $id_option,
+                    'id_tryout' => $id_tryout
                 ]);
             }
 
