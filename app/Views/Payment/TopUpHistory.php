@@ -36,7 +36,7 @@
       <div
         class="bg-white rounded-xl p-3 pl-6 flex gap-6 text-sm text-gray-700 font-normal mb-4 select-none"
       >
-        <a href="/dashboard/topuphistory">
+        <a href="/dashboard/user/topuphistory">
           <button
             class="text-[#3b94d9] border-b-2 border-[#3b94d9] pb-1 focus:outline-none"
           >
@@ -44,13 +44,13 @@
           </button>
         </a>
 
-        <a href="/dashboard/voucherhistory">
+        <a href="/dashboard/user/voucherhistory">
           <button class="hover:text-[#3b94d9] focus:outline-none">
             Voucher
           </button>
         </a>
 
-        <a href="/dashboard/tryouthistory">
+        <a href="/dashboard/user/tryouthistory">
           <button class="hover:text-[#3b94d9] focus:outline-none">
             Tryout
           </button>

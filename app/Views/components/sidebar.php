@@ -24,16 +24,16 @@
     </div>
     <hr class="border-gray-300 mx-6" />
     <nav class="mt-6 flex flex-col gap-6 px-8">
-        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard">
+        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/user">
             <span class="text-2xl"> 🏛️ </span> Home
         </a>
         <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/user/tryout">
             <span class="text-2xl"> 📝 </span> Tryout
         </a>
-        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/12raport.html">
+        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/user/raport">
             <span class="text-2xl"> 🏆 </span> Raport
         </a>
-        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/topuphistory">
+        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/user/topuphistory">
             <span class="text-2xl"> 🪙 </span> Payment
         </a>
         <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/help">
@@ -42,7 +42,7 @@
         <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/dashboard/account">
             <span class="text-2xl"> ⚙️ </span> Setting
         </a>
-        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/login">
+        <a class="flex items-center gap-3 text-base font-semibold text-gray-900 hover:text-gray-700" href="/logout">
             <span class="text-2xl"> 🧑‍💻 </span> Logout
         </a>
     </nav>

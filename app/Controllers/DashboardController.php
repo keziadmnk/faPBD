@@ -13,14 +13,15 @@ class DashboardController extends BaseController
     {
         
     // Ambil data pengguna
-    $penggunaModel = new PenggunaModel();
-    $id_pengguna = 1;  // ID pengguna yang diinginkan (misalnya Kezia = 1)
-    $pengguna = $penggunaModel->find($id_pengguna);  // Ambil data pengguna berdasarkan ID
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    $penggunaModel = new \App\Models\PenggunaModel();
+    $pengguna = $penggunaModel->find($id_pengguna);
+    session()->set('pengguna', $pengguna); 
 
 
     // Ambil data kategori dari model
     $kategoriModel = new KategoriModel();
-    $kategori = $kategoriModel->getAllKategori();  // Mengambil semua kategori
+    $kategori = $kategoriModel->getAllKategori();  
 
     // Kirim data kategori ke view
     return view('Dashboard/Dashboard', ['kategori' => $kategori, 'pengguna' => $pengguna]);
@@ -40,7 +41,7 @@ class DashboardController extends BaseController
         }
 
         // ID Pengguna hardcoded (Kezia = id_pengguna 1)
-        $id_pengguna = 1; 
+        $id_pengguna = session()->get('pengguna')['id_pengguna']; 
 
         // Periksa status pembelian untuk setiap tryout
         $tryoutPurchaseModel = new TryoutPurchaseModel();
@@ -54,7 +55,7 @@ class DashboardController extends BaseController
             'tryout' => $tryout,
             'kategori' => $kategori,
             'kategoriId' => $kategoriId,
-            'pengguna' => $this->getUserData()  // Kirim data pengguna ke view
+            'pengguna' => session()->get('pengguna')  // Kirim data pengguna ke view
         ]);
     }
 
@@ -66,7 +67,7 @@ class DashboardController extends BaseController
 
     // Ambil data pengguna
     $penggunaModel = new PenggunaModel();
-    $id_pengguna = 1;  // ID pengguna yang membeli tryout (Kezia = 1)
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];  // ID pengguna yang membeli tryout (Kezia = 1)
     $pengguna = $penggunaModel->find($id_pengguna); // Ambil data pengguna
 
     // Ambil data tryout
@@ -93,14 +94,19 @@ class DashboardController extends BaseController
         ];
 
         // Simpan pembelian
-        $tryoutPurchaseModel->save($dataPurchase);
+        $db = \Config\Database::connect();
+        $db->table('tryout_purchase')->insert($dataPurchase);
 
-        // Setelah pembelian berhasil, arahkan ke halaman SuccessPurchase dan tampilkan informasi pembelian
+        // Update session dengan saldo terbaru
+        $pengguna = $penggunaModel->find($id_pengguna);
+        session()->set('pengguna', $pengguna);
+
+        // Tampilkan halaman sukses pembelian
         return view('Tryout/SuccessPurchase', [
             'tryout' => $tryout,
             'tanggal_transaksi' => date('d F Y - H:i:s'),
             'harga' => $tryout['harga'],
-            'pengguna' => $this->getUserData() // Pastikan data pengguna yang terbaru diteruskan ke view
+            'pengguna' => $pengguna // Pastikan data pengguna yang terbaru diteruskan ke view
         ]);
     } else {
         // Jika saldo tidak cukup
@@ -111,7 +117,7 @@ class DashboardController extends BaseController
 
 public function tryoutPurchase($status = 'Belum')
 {
-    $id_pengguna = 1;  // ID Pengguna hardcoded ( Kezia = id_pengguna 1)
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];  // ID Pengguna hardcoded ( Kezia = id_pengguna 1)
 
     // Ambil data tryout purchase berdasarkan ID pengguna dan status pengerjaan
     $tryoutPurchaseModel = new TryoutPurchaseModel();
@@ -131,7 +137,7 @@ public function tryoutPurchase($status = 'Belum')
 
     public function userTryout()
 {
-    $id_pengguna = 1;  // ID Pengguna hardcoded ( Kezia = id_pengguna 1)
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];  // ID Pengguna hardcoded ( Kezia = id_pengguna 1)
 
     // Ambil data tryout purchase berdasarkan ID pengguna
     $tryoutPurchaseModel = new TryoutPurchaseModel();
@@ -153,7 +159,7 @@ public function tryoutPurchase($status = 'Belum')
    public function attention($id_tryout)
 {
     // Ambil data pengguna
-    $id_pengguna = 1; // ID Pengguna hardcoded (misal Kezia = id_pengguna 1)
+    $id_pengguna = session()->get('pengguna')['id_pengguna']; // ID Pengguna hardcoded (misal Kezia = id_pengguna 1)
     $penggunaModel = new PenggunaModel();
     $pengguna = $penggunaModel->find($id_pengguna);
 
@@ -177,7 +183,7 @@ public function tryoutPurchase($status = 'Belum')
 
     // Ambil data pengguna
     $penggunaModel = new PenggunaModel();
-    $id_pengguna = 1; // Misalnya ID pengguna 1
+    $id_pengguna = session()->get('pengguna')['id_pengguna']; // Misalnya ID pengguna 1
     $pengguna = $penggunaModel->find($id_pengguna);
 
     // Kirim data ke halaman ujian (start tryout)
@@ -189,52 +195,67 @@ public function tryoutPurchase($status = 'Belum')
 
   
     // Method untuk mengubah status pengerjaan tryout ke 'Selesai'
-    public function completeTryout($id_purchase)
+    public function completeTryout($id_tryout)
     {
         $tryoutPurchaseModel = new TryoutPurchaseModel();
-
-        // Mengupdate status pengerjaan menjadi 'Selesai'
+        $id_pengguna = session()->get('pengguna')['id_pengguna'];
         $data = [
             'status_pengerjaan' => 'Selesai'
         ];
-
-        // Update data di database berdasarkan id_purchase
-        $tryoutPurchaseModel->update($id_purchase, $data);
-
+        // Update data di database berdasarkan composite key
+        $db = \Config\Database::connect();
+        $db->table('tryout_purchase')
+            ->where('id_tryout', $id_tryout)
+            ->where('id_pengguna', $id_pengguna)
+            ->update($data);
         // Redirect kembali ke halaman tryout yang sudah dikerjakan
         return redirect()->to('/dashboard/tryout_purchase/Selesai');
     }
 
     public function help()
 {
-    // Ambil data pengguna
-    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
-
-    // Menampilkan halaman Help dan mengirimkan data pengguna
-    return view('Help/Help', [
-        'pengguna' => $pengguna  // Kirim data pengguna ke view
-    ]);
+    // Ambil data pengguna terbaru dari session
+    $pengguna = session()->get('pengguna');
+    return view('Help/Help', ['pengguna' => $pengguna]);
 }
     public function account()
 {
-    // Ambil data pengguna
-    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
-
-    // Menampilkan halaman Account dan mengirimkan data pengguna
-    return view('Setting/Account', [
-        'pengguna' => $pengguna  // Kirim data pengguna ke view
-    ]);
+    // Ambil data pengguna terbaru dari session
+    $pengguna = session()->get('pengguna');
+    return view('Setting/Account', ['pengguna' => $pengguna]);
 }
 
 public function security()
 {
-    // Ambil data pengguna
-    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
+    // Ambil data pengguna terbaru dari session
+    $pengguna = session()->get('pengguna');
+    return view('Setting/Security', ['pengguna' => $pengguna]);
+}
 
-    // Menampilkan halaman Security dan mengirimkan data pengguna
-    return view('Setting/Security', [
-        'pengguna' => $pengguna  // Kirim data pengguna ke view
-    ]);
+public function editAccount()
+{
+    $penggunaModel = new \App\Models\PenggunaModel();
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    // Fallback: jika ada data POST, tetap proses update meski method bukan 'post'
+    if ($this->request->getMethod() === 'post' || !empty($this->request->getPost())) {
+        $data = [
+            'nama' => $this->request->getPost('nama'),
+            'tanggal_lahir' => $this->request->getPost('tanggal_lahir'),
+            'provinsi' => $this->request->getPost('provinsi'),
+            'kabupaten' => $this->request->getPost('kabupaten'),
+        ];
+        $result = $penggunaModel->update($id_pengguna, $data);
+        if (!$result) {
+            $error = $penggunaModel->errors();
+            return redirect()->back()->withInput()->with('error', 'Gagal update: ' . json_encode($error));
+        }
+        // Ambil data terbaru dan update session
+        $pengguna = $penggunaModel->find($id_pengguna);
+        session()->set('pengguna', $pengguna);
+        return redirect()->to('/dashboard/account')->with('success', 'Data akun berhasil diperbarui!');
+    }
+    $pengguna = $penggunaModel->find($id_pengguna);
+    return view('Setting/EditAccount', ['pengguna' => $pengguna]);
 }
 
 
@@ -243,40 +264,43 @@ public function security()
     {
         // Ambil data pengguna dari model
         $penggunaModel = new PenggunaModel();
-        $id_pengguna = 1;  // ID pengguna yang diinginkan (misalnya Kezia = 1)
+        $id_pengguna = session()->get('pengguna')['id_pengguna'];  // ID pengguna yang diinginkan (misalnya Kezia = 1)
         return $penggunaModel->find($id_pengguna);
     }
 
     public function topuphistory()
 {
-    // Ambil data pengguna
-    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
-
-    // Menampilkan halaman Help dan mengirimkan data pengguna
-    return view('Payment/TopUpHistory', [
-        'pengguna' => $pengguna  // Kirim data pengguna ke view
-    ]);
+    // Ambil data pengguna terbaru dari session
+    $pengguna = session()->get('pengguna');
+    return view('Payment/TopUpHistory', ['pengguna' => $pengguna]);
 }
 
-    public function voucherhistory()
+public function voucherhistory()
 {
-    // Ambil data pengguna
-    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
-
-    // Menampilkan halaman Help dan mengirimkan data pengguna
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    $pengguna = session()->get('pengguna');
+    $db = \Config\Database::connect();
+    $histori = $db->table('redeem_voucher')->where('id_pengguna', $id_pengguna)->orderBy('tanggal_digunakan', 'desc')->get()->getResultArray();
     return view('Payment/VoucherHistory', [
-        'pengguna' => $pengguna  // Kirim data pengguna ke view
+        'pengguna' => $pengguna,
+        'histori' => $histori
     ]);
 }
 
-    public function tryouthistory()
+public function tryouthistory()
 {
-    // Ambil data pengguna
-    $pengguna = $this->getUserData();  // Pastikan ini mengambil data pengguna yang benar
-
-    // Menampilkan halaman Help dan mengirimkan data pengguna
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    $pengguna = session()->get('pengguna');
+    $db = \Config\Database::connect();
+    $histori = $db->table('tryout_purchase')
+        ->select('tryout_purchase.*, tryout.nama_tryout, tryout.harga')
+        ->join('tryout', 'tryout.id_tryout = tryout_purchase.id_tryout')
+        ->where('tryout_purchase.id_pengguna', $id_pengguna)
+        ->orderBy('tryout_purchase.tanggal_transaksi', 'desc')
+        ->get()->getResultArray();
     return view('Payment/TryoutHistory', [
-        'pengguna' => $pengguna  // Kirim data pengguna ke view
+        'pengguna' => $pengguna,
+        'histori' => $histori
     ]);
 }
 
@@ -286,5 +310,121 @@ public function security()
         // Redirect ke StartTryoutController untuk menampilkan hasil
         return redirect()->to("/dashboard/user/tryout/{$id_tryout}/results");
     }
+
+public function voucherDetail($kode_voucher)
+{
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    $db = \Config\Database::connect();
+    $voucher = $db->table('redeem_voucher')
+        ->where('kode_voucher', $kode_voucher)
+        ->where('id_pengguna', $id_pengguna)
+        ->get()->getRowArray();
+    if (!$voucher) {
+        return redirect()->to('/dashboard/user/voucherhistory')->with('error', 'Voucher tidak ditemukan atau bukan milik Anda.');
+    }
+    $pengguna = session()->get('pengguna');
+    return view('TopUp/DetailRedeem', [
+        'pengguna' => $pengguna,
+        'voucher' => $voucher
+    ]);
+}
+
+public function tryoutHistoryDetail($id_tryout)
+{
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    $db = \Config\Database::connect();
+    $purchase = $db->table('tryout_purchase')
+        ->where('id_tryout', $id_tryout)
+        ->where('id_pengguna', $id_pengguna)
+        ->get()->getRowArray();
+    if (!$purchase) {
+        return redirect()->to('/dashboard/user/tryouthistory')->with('error', 'Data tryout tidak ditemukan atau bukan milik Anda.');
+    }
+    $tryout = $db->table('tryout')->where('id_tryout', $id_tryout)->get()->getRowArray();
+    $pengguna = session()->get('pengguna');
+    return view('Tryout/SuccessPurchase', [
+        'tryout' => $tryout,
+        'tanggal_transaksi' => $purchase['tanggal_transaksi'],
+        'harga' => $tryout['harga'] ?? 0,
+        'pengguna' => $pengguna
+    ]);
+}
+
+public function raport()
+{
+    $id_pengguna = session()->get('pengguna')['id_pengguna'];
+    $pengguna = session()->get('pengguna');
+    $db = \Config\Database::connect();
+    
+    // Ambil semua tryout yang sudah selesai dikerjakan user
+    $raport = $db->table('tryout_purchase')
+        ->select('tryout_purchase.*, tryout.nama_tryout, tryout.harga, tryout.tanggal_mulai')
+        ->join('tryout', 'tryout.id_tryout = tryout_purchase.id_tryout')
+        ->where('tryout_purchase.id_pengguna', $id_pengguna)
+        ->where('tryout_purchase.status_pengerjaan', 'Selesai')
+        ->orderBy('tryout_purchase.tanggal_transaksi', 'desc')
+        ->get()->getResultArray();
+    
+    // Hitung jumlah tryout yang sudah selesai
+    $jumlahTryoutSelesai = count($raport);
+    
+    // Hitung ranking nasional dan provinsi untuk setiap tryout
+    foreach ($raport as &$r) {
+        // Ranking nasional: urutan total_score di seluruh peserta tryout ini
+        $all = $db->table('tryout_purchase')
+            ->where('id_tryout', $r['id_tryout'])
+            ->where('status_pengerjaan', 'Selesai')
+            ->orderBy('total_score', 'desc')
+            ->get()->getResultArray();
+        $rank_nasional = 0;
+        $total_nasional = count($all);
+        foreach ($all as $i => $row) {
+            if ($row['id_pengguna'] == $id_pengguna) {
+                $rank_nasional = $i + 1;
+                break;
+            }
+        }
+        // Ranking provinsi: urutan total_score di peserta tryout ini dengan provinsi sama
+        $all_prov = $db->table('tryout_purchase')
+            ->join('pengguna', 'pengguna.id_pengguna = tryout_purchase.id_pengguna')
+            ->where('tryout_purchase.id_tryout', $r['id_tryout'])
+            ->where('tryout_purchase.status_pengerjaan', 'Selesai')
+            ->where('pengguna.provinsi', $pengguna['provinsi'])
+            ->orderBy('tryout_purchase.total_score', 'desc')
+            ->get()->getResultArray();
+        $rank_prov = 0;
+        $total_prov = count($all_prov);
+        foreach ($all_prov as $i => $row) {
+            if ($row['id_pengguna'] == $id_pengguna) {
+                $rank_prov = $i + 1;
+                break;
+            }
+        }
+        $r['rank_nasional'] = $rank_nasional;
+        $r['total_nasional'] = $total_nasional;
+        $r['rank_prov'] = $rank_prov;
+        $r['total_prov'] = $total_prov;
+    }
+    
+    // Siapkan data untuk chart dari database
+    $chartData = [];
+    if (!empty($raport)) {
+        foreach ($raport as $r) {
+            $chartData[] = [
+                'label' => $r['nama_tryout'],
+                'score' => $r['total_score'],
+                'rank_nasional_pct' => $total_nasional > 0 ? round((($total_nasional - $r['rank_nasional'] + 1) / $total_nasional) * 100, 1) : 0,
+                'rank_prov_pct' => $total_prov > 0 ? round((($total_prov - $r['rank_prov'] + 1) / $total_prov) * 100, 1) : 0
+            ];
+        }
+    }
+    
+    return view('Raport/Raport', [
+        'pengguna' => $pengguna,
+        'raport' => $raport,
+        'jumlahTryoutSelesai' => $jumlahTryoutSelesai,
+        'chartData' => $chartData
+    ]);
+}
 
 }

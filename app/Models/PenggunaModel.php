@@ -15,7 +15,7 @@ class PenggunaModel extends Model
     protected $allowedFields    = ['nama', 'email', 'password', 'saldo','tanggal_lahir', 'provinsi', 'kabupaten', 'tanggal_daftar', 'foto_pengguna', 'nomor_hp'];
 
     protected bool $allowEmptyInserts = false;
-    protected bool $updateOnlyChanged = true;
+    protected bool $updateOnlyChanged = false;
 
     protected array $casts = [];
     protected array $castHandlers = [];

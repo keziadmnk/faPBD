@@ -31,7 +31,7 @@
   <h1 class="text-xl font-semibold mb-4">Hasil Tryout</h1>
   <section class="bg-white rounded-xl p-8 mb-6 mx-auto">
     <div class="text-center mb-6">
-      <p class="mb-4">Selamaat !!</p>
+      <p class="mb-4"><?= $overallStatus === 'Lulus' ? 'Selamat !!' : 'Maaf !!' ?></p>
       <img
         alt="Golden trophy with green leaves on each side"
         class="mx-auto mb-6"
@@ -102,7 +102,7 @@
       <button
         class="bg-[#3b9ad9] text-white rounded-full px-10 py-2 text-sm md:text-base hover:bg-[#2a7ac7] transition"
         type="button"
-        onclick="window.location.href='/dashboard/ranking/<?= $tryout['id_tryout'] ?>';"
+        onclick="window.location.href='/dashboard/user/raport';"
       >
         Lihat ranking
       </button>

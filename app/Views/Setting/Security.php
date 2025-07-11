@@ -26,7 +26,7 @@
   </head>
   <body class="bg-slate-50 min-h-screen flex">
     
-  <?= view('components/sidebar'); ?>
+  <?= view('components/sidebar', ['pengguna' => $pengguna]) ?>
 
     <!-- Main content -->
     <main class="flex-1 p-8">
@@ -61,7 +61,7 @@
           <div class="mb-4 text-center">
             <div class="flex justify-center items-center gap-2">
               <span>Email</span>
-              <span class="font-bold">keziadamanik20@gmail.com</span>
+              <span class="font-bold"><?= $pengguna['email'] ?? '-' ?></span>
             </div>
           </div>
 
@@ -69,7 +69,7 @@
           <div class="text-center">
             <div class="flex justify-center items-center gap-2">
               <span>Phone Number</span>
-              <a class="text-[#3b9ad9] font-normal" href="#">Add Phone</a>
+              <span class="font-bold"><?= $pengguna['nomor_hp'] ?? '-' ?></span>
             </div>
           </div>
         </div>

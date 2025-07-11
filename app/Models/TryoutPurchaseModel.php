@@ -7,7 +7,6 @@ use CodeIgniter\Model;
 class TryoutPurchaseModel extends Model
 {
     protected $table            = 'tryout_purchase';
-    protected $primaryKey       = 'id_tryout';
     protected $useAutoIncrement = false;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;

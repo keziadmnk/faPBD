@@ -293,8 +293,10 @@ function finishTryout() {
     .then(data => {
       if (data.success) {
         alert('Tryout berhasil diselesaikan!');
+        window.onbeforeunload = null; // Hapus event sebelum redirect
         window.location.href = '/dashboard/user/tryout/finish/' + <?= $tryout['id_tryout'] ?>;  // Redirect ke halaman finish dengan ID tryout
       } else {
+        alert(data.message || 'Terjadi kesalahan'); // tampilkan pesan backend
         throw new Error(data.message || 'Terjadi kesalahan');
       }
     })

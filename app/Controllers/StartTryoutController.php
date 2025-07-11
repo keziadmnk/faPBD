@@ -45,7 +45,7 @@ class StartTryoutController extends BaseController
 
         // Ambil data pengguna (dalam implementasi real, ambil dari session)
         $penggunaModel = new PenggunaModel();
-        $id_pengguna = 1; // Ganti dengan session pengguna yang login
+        $id_pengguna = session()->get('pengguna')['id_pengguna'];
         $pengguna = $penggunaModel->find($id_pengguna);
 
         // Cek apakah pengguna sudah membeli tryout ini
@@ -64,9 +64,11 @@ class StartTryoutController extends BaseController
         }
 
         // Update status menjadi "Sedang Dikerjakan"
-        $this->tryoutPurchaseModel->update(['id_tryout' => $id_tryout, 'id_pengguna' => $id_pengguna], [
-            'status_pengerjaan' => 'Sedang Dikerjakan'
-        ]);
+        $db = \Config\Database::connect();
+        $db->table('tryout_purchase')
+            ->where('id_tryout', $id_tryout)
+            ->where('id_pengguna', $id_pengguna)
+            ->update(['status_pengerjaan' => 'Sedang Dikerjakan']);
 
         // Loop untuk menambahkan pilihan untuk setiap soal
         foreach ($questions as &$question) {
@@ -91,6 +93,7 @@ class StartTryoutController extends BaseController
         // Ambil jawaban yang sudah ada (jika pengguna melanjutkan tryout)
         $existingAnswers = $this->userAnswerModel
             ->where('id_pengguna', $id_pengguna)
+            ->where('id_tryout', $id_tryout)
             ->whereIn('no_soal', array_column($questions, 'no_soal'))
             ->findAll();
 
@@ -107,9 +110,11 @@ class StartTryoutController extends BaseController
     public function saveAnswers()
     {
         $data = $this->request->getPost();
+        log_message('debug', 'Data POST: ' . json_encode($data));
 
         // Validasi input
         if (!isset($data['id_pengguna'], $data['id_tryout'], $data['answers'])) {
+            log_message('debug', 'Data tidak lengkap!');
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Data tidak lengkap!'
@@ -119,8 +124,10 @@ class StartTryoutController extends BaseController
         $id_pengguna = $data['id_pengguna'];
         $id_tryout = $data['id_tryout'];
         $answers = json_decode($data['answers'], true);
+        log_message('debug', 'Answers decoded: ' . json_encode($answers));
 
         if (!$answers) {
+            log_message('debug', 'Format jawaban tidak valid!');
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Format jawaban tidak valid!'
@@ -128,51 +135,83 @@ class StartTryoutController extends BaseController
         }
 
         try {
-            // Mulai transaction untuk memastikan data konsisten
-            $this->userAnswerModel->transStart();
+            // Validasi: pastikan semua id_option dan no_soal valid
+            $valid = true;
+            foreach ($answers as $no_soal => $id_option) {
+                $soal = $this->questionModel->where('no_soal', $no_soal)->first();
+                $opsi = $this->optionModel->where('id_option', $id_option)->first();
+                if (!$soal || !$opsi) {
+                    $valid = false;
+                    break;
+                }
+            }
+            if (!$valid) {
+                log_message('debug', 'Ada jawaban dengan soal atau opsi tidak valid!');
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Ada jawaban dengan soal atau opsi tidak valid!'
+                ]);
+            }
 
-            // Hapus jawaban lama jika ada
+            // Mulai transaction untuk memastikan data konsisten
+            log_message('debug', 'Mulai hapus jawaban lama...');
+            // Hapus jawaban lama untuk user dan tryout ini
             $this->userAnswerModel
                 ->where('id_pengguna', $id_pengguna)
                 ->where('id_tryout', $id_tryout)
-                ->whereIn('no_soal', array_keys($answers))
                 ->delete();
-
+            log_message('debug', 'Cek data user_answer setelah delete: ' . json_encode(
+                $this->userAnswerModel
+                    ->where('id_pengguna', $id_pengguna)
+                    ->where('id_tryout', $id_tryout)
+                    ->findAll()
+            ));
+            log_message('debug', 'Hapus jawaban lama selesai. Mulai insert jawaban baru...');
             // Simpan jawaban baru
+            $db = \Config\Database::connect();
             foreach ($answers as $no_soal => $id_option) {
-                $this->userAnswerModel->insert([
+                log_message('debug', 'Insert user_answer: ' . json_encode([
                     'id_pengguna' => $id_pengguna,
                     'no_soal' => $no_soal,
-                    'id_option' => $id_option,
-                    'id_tryout' => $id_tryout
+                    'id_tryout' => $id_tryout,
+                    'id_option' => $id_option
+                ]));
+                $result = $db->table('user_answer')->insert([
+                    'id_pengguna' => $id_pengguna,
+                    'no_soal' => $no_soal,
+                    'id_tryout' => $id_tryout,
+                    'id_option' => $id_option
                 ]);
+                $error = $db->error();
+                log_message('debug', 'Insert result: ' . json_encode($result) . ' | Error: ' . json_encode($error));
+                if (!$result) {
+                    log_message('error', 'Insert user_answer gagal: ' . json_encode($error));
+                    throw new \Exception('Insert user_answer gagal: ' . $error['message']);
+                }
             }
+            log_message('debug', 'Insert jawaban baru selesai.');
 
             // Hitung hasil tryout
             $this->calculateResults($id_pengguna, $id_tryout);
 
             // Update status tryout menjadi selesai
-            $this->tryoutPurchaseModel->update(
-                ['id_tryout' => $id_tryout, 'id_pengguna' => $id_pengguna],
-                ['status_pengerjaan' => 'Selesai']
-            );
-
-            $this->userAnswerModel->transComplete();
-
-            if ($this->userAnswerModel->transStatus() === false) {
-                throw new \Exception('Gagal menyimpan jawaban');
-            }
+            $db = \Config\Database::connect();
+            $db->table('tryout_purchase')
+                ->where('id_tryout', $id_tryout)
+                ->where('id_pengguna', $id_pengguna)
+                ->update(['status_pengerjaan' => 'Selesai']);
 
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Jawaban berhasil disimpan!'
             ]);
         } catch (\Exception $e) {
+            log_message('error', 'Gagal simpan jawaban: ' . $e->getMessage() . ' | Data: ' . json_encode($data));
             $this->userAnswerModel->transRollback();
 
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage() // tampilkan pesan error asli
             ]);
         }
     }
@@ -194,7 +233,7 @@ public function finish($id_tryout)
 
     // PERBAIKAN: Ambil id_pengguna dari session atau hardcode seperti di controller lain
     $penggunaModel = new PenggunaModel();
-    $id_pengguna = session()->get('id_pengguna') ?? 1; // Fallback ke ID 1 jika session kosong
+    $id_pengguna = session()->get('pengguna')['id_pengguna']; // Fallback ke ID 1 jika session kosong
     
     // PERBAIKAN: Pastikan kita mendapatkan data pengguna yang lengkap
     $pengguna = $penggunaModel->find($id_pengguna);
@@ -208,6 +247,7 @@ public function finish($id_tryout)
     // Ambil jawaban pengguna berdasarkan id_pengguna
     $userAnswerModel = new UserAnswerModel();
     $answers = $userAnswerModel->where('id_pengguna', $id_pengguna)
+                                ->where('id_tryout', $id_tryout)
                                 ->whereIn('no_soal', array_column($questions, 'no_soal'))
                                 ->findAll();
 
@@ -247,7 +287,55 @@ public function finish($id_tryout)
     ]);
 }
 
+    public function reviewSubject($id_tryout, $id_subject)
+    {
+        $id_pengguna = session()->get('pengguna')['id_pengguna'];
+        $questionModel = new \App\Models\QuestionModel();
+        $detailPertanyaanModel = new \App\Models\DetailPertanyaanModel();
+        $optionModel = new \App\Models\OptionModel();
+        $userAnswerModel = new \App\Models\UserAnswerModel();
+        $subjectModel = new \App\Models\SubjectModel();
+        $tryoutModel = new \App\Models\TryoutModel();
 
+        $subject = $subjectModel->find($id_subject);
+        $tryout = $tryoutModel->find($id_tryout);
+
+        // Ambil semua soal untuk tryout dan subject ini
+        $questions = $questionModel->where('id_tryout', $id_tryout)
+                                   ->where('id_subject', $id_subject)
+                                   ->orderBy('no_soal', 'ASC')
+                                   ->findAll();
+        // Ambil semua jawaban user untuk tryout ini
+        $userAnswers = $userAnswerModel->where('id_pengguna', $id_pengguna)
+                                       ->where('id_tryout', $id_tryout)
+                                       ->findAll();
+        $userAnswerMap = [];
+        foreach ($userAnswers as $ua) {
+            $userAnswerMap[$ua['no_soal']] = $ua['id_option'];
+        }
+        // Untuk setiap soal, ambil opsi dan point
+        foreach ($questions as &$q) {
+            $q['options'] = $detailPertanyaanModel->where('no_soal', $q['no_soal'])->orderBy('id_option','ASC')->findAll();
+            // Ambil jawaban user untuk soal ini
+            $q['user_answer'] = $userAnswerMap[$q['no_soal']] ?? null;
+            // Cari id_option yang benar (point tertinggi)
+            $q['correct_option'] = null;
+            $max_point = -9999;
+            foreach ($q['options'] as $opt) {
+                if ($opt['point'] > $max_point) {
+                    $max_point = $opt['point'];
+                    $q['correct_option'] = $opt['id_option'];
+                }
+            }
+        }
+        $pengguna = session()->get('pengguna');
+        return view('Tryout/ReviewSubject', [
+            'questions' => $questions,
+            'subject' => $subject,
+            'tryout' => $tryout,
+            'pengguna' => $pengguna
+        ]);
+    }
 
 
     // Menghitung hasil tryout per subject
@@ -255,7 +343,6 @@ public function finish($id_tryout)
     {
         // Ambil semua subject
         $subjects = $this->subjectModel->findAll();
-        
         // Hapus hasil lama jika ada
         $this->subjectResultModel
             ->where('id_pengguna', $id_pengguna)
@@ -266,33 +353,22 @@ public function finish($id_tryout)
         $allPassed = true;
 
         foreach ($subjects as $subject) {
-            // Tentukan rentang soal berdasarkan subject
-            switch ($subject['nama_subject']) {
-                case 'TWK':
-                    $startSoal = 1;
-                    $endSoal = 30;
-                    break;
-                case 'TIU':
-                    $startSoal = 31;
-                    $endSoal = 65;
-                    break;
-                case 'TKP':
-                    $startSoal = 66;
-                    $endSoal = 110;
-                    break;
-                default:
-                    continue 2;
-            }
+            // Ambil semua soal untuk tryout dan subject ini
+            $questions = $this->questionModel
+                ->where('id_tryout', $id_tryout)
+                ->where('id_subject', $subject['id_subject'])
+                ->findAll();
 
-            // Hitung score untuk subject ini
             $subjectScore = 0;
             $correctCount = 0;
 
-            for ($no_soal = $startSoal; $no_soal <= $endSoal; $no_soal++) {
+            foreach ($questions as $q) {
+                $no_soal = $q['no_soal'];
                 // Ambil jawaban pengguna
                 $userAnswer = $this->userAnswerModel
                     ->where('id_pengguna', $id_pengguna)
                     ->where('no_soal', $no_soal)
+                    ->where('id_tryout', $id_tryout)
                     ->first();
 
                 if ($userAnswer) {
@@ -307,7 +383,6 @@ public function finish($id_tryout)
                     if ($detail) {
                         $point = $detail['point'];
                         $subjectScore += $point;
-                        
                         if ($point > 0) {
                             $correctCount++;
                         }
@@ -335,13 +410,14 @@ public function finish($id_tryout)
         }
 
         // Update total score dan status kelulusan di tryout_purchase
-        $this->tryoutPurchaseModel->update(
-            ['id_tryout' => $id_tryout, 'id_pengguna' => $id_pengguna],
-            [
+        $db = \Config\Database::connect();
+        $db->table('tryout_purchase')
+            ->where('id_tryout', $id_tryout)
+            ->where('id_pengguna', $id_pengguna)
+            ->update([
                 'total_score' => $totalScore,
                 'status_kelulusan_to' => $allPassed ? 'Lulus' : 'Tidak Lulus'
-            ]
-        );
+            ]);
     }
 
     // API untuk mendapatkan jawaban yang sudah ada (jika diperlukan)
@@ -355,12 +431,11 @@ public function finish($id_tryout)
         $questionNumbers = array_column($questions, 'no_soal');
 
         // Ambil jawaban yang sudah ada
-       // Ambil jawaban pengguna berdasarkan id_pengguna
-$answers = $this->userAnswerModel
-    ->where('id_pengguna', $id_pengguna)  // Mendapatkan jawaban berdasarkan pengguna
-    ->whereIn('no_soal', array_column($questions, 'no_soal'))  // Memastikan hanya jawaban untuk soal yang ada
-    ->findAll();
-
+        $answers = $this->userAnswerModel
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_tryout', $id_tryout)
+            ->whereIn('no_soal', $questionNumbers)
+            ->findAll();
 
         // Format jawaban untuk frontend
         $formattedAnswers = [];
@@ -383,7 +458,7 @@ $answers = $this->userAnswerModel
 
         // Ambil data pengguna
         $penggunaModel = new PenggunaModel();
-        $id_pengguna = session()->get('id_pengguna') ?? 1; // Fallback ke ID 1 jika session kosong
+        $id_pengguna = session()->get('pengguna')['id_pengguna']; // Fallback ke ID 1 jika session kosong
         $pengguna = $penggunaModel->find($id_pengguna);
 
         // Validasi data pengguna

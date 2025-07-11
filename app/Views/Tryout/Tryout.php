@@ -30,11 +30,13 @@
     
     <!-- Filters -->
     <div class="flex space-x-3 mb-6">
-        <a href="/dashboard/tryout/0" class="text-md rounded-full px-4 py-1 <?= ($kategoriId == 0) ? 'bg-[#3b9ad9] text-white' : 'bg-white text-[#3b9ad9]' ?>">
+        <a href="/dashboard/user/kategori/0" class="text-md rounded-full px-4 py-1 <?= (
+            $kategoriId == 0) ? 'bg-[#3b9ad9] text-white' : 'bg-white text-[#3b9ad9]' ?>">
             All
         </a>
         <?php foreach ($kategori as $kat): ?>
-            <a href="/dashboard/tryout/<?= $kat['id_kategori'] ?>" class="text-md rounded-full px-4 py-1 <?= ($kategoriId == $kat['id_kategori']) ? 'bg-[#3b9ad9] text-white' : 'bg-white text-[#3b9ad9]' ?>">
+            <a href="/dashboard/user/kategori/<?= $kat['id_kategori'] ?>" class="text-md rounded-full px-4 py-1 <?= (
+                $kategoriId == $kat['id_kategori']) ? 'bg-[#3b9ad9] text-white' : 'bg-white text-[#3b9ad9]' ?>">
                 <?= $kat['nama_kategori'] ?>
             </a>
         <?php endforeach; ?>
@@ -61,7 +63,7 @@
 
                 <?php 
                     // Cek jika tryout sudah dibeli oleh pengguna
-                    $id_pengguna = 1; // Gunakan id_pengguna yang sesuai
+                    $id_pengguna = session()->get('pengguna')['id_pengguna'];
                     $tryoutPurchaseModel = new \App\Models\TryoutPurchaseModel();
                     $purchased = $tryoutPurchaseModel->getStatusTryout($id_pengguna, $item['id_tryout']);
                 ?>
@@ -70,6 +72,7 @@
                     <p class="text-xs text-[#3b9ad9] font-semibold">Tryout telah terbeli</p>
                 <?php else: ?>
                     <form action="/dashboard/buy_tryout/<?= $item['id_tryout'] ?>" method="POST">
+                        <?= csrf_field() ?>
                         <button type="submit" class="bg-[#3b9ad9] text-white text-xs font-semibold rounded-full px-8 py-2 w-full">
                             Beli Tryout
                         </button>

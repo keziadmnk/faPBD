@@ -26,7 +26,7 @@
   </head>
   <body class="bg-slate-50 min-h-screen flex">
     
-  <?= view('components/sidebar'); ?>
+  <?= view('components/sidebar', ['pengguna' => $pengguna]) ?>
 
     <!-- Main content -->
     <main class="flex-1 p-8">
@@ -51,6 +51,18 @@
       </div>
 
       <!-- Account info card -->
+      <?php if (session()->getFlashdata('error')): ?>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong class="font-bold">Error!</strong>
+          <span class="block sm:inline"><?= session()->getFlashdata('error') ?></span>
+        </div>
+      <?php endif; ?>
+      <?php if (session()->getFlashdata('success')): ?>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong class="font-bold">Sukses!</strong>
+          <span class="block sm:inline"><?= session()->getFlashdata('success') ?></span>
+        </div>
+      <?php endif; ?>
       <section
         class="bg-white rounded-xl p-10 flex flex-col items-center gap-4 text-center mx-auto"
       >
@@ -66,24 +78,34 @@
           class="grid grid-cols-2 gap-x-6 gap-y-2 text-gray-900 text-sm max-w-md mx-auto"
         >
           <dt class="text-right font-normal">Nama Lengkap</dt>
-          <dd class="font-semibold text-left">Kezia Valerina 25# 1C</dd>
+          <dd class="font-semibold text-left"><?= $pengguna['nama'] ?? '-' ?></dd>
 
           <dt class="text-right font-normal">Tanggal Lahir</dt>
-          <dd class="font-semibold text-left">Senin, 20 Juni 2005</dd>
+          <dd class="font-semibold text-left">
+    <?php if (!empty($pengguna['tanggal_lahir']) && $pengguna['tanggal_lahir'] !== '0000-00-00'): ?>
+        <?= date('l, d F Y', strtotime($pengguna['tanggal_lahir'])) ?>
+    <?php else: ?>
+        -
+    <?php endif; ?>
+</dd>
 
           <dt class="text-right font-normal">Provinsi</dt>
-          <dd class="font-semibold text-left">Sumatera Barat</dd>
+          <dd class="font-semibold text-left"><?= $pengguna['provinsi'] ?? '-' ?></dd>
 
           <dt class="text-right font-normal">Kabupaten</dt>
-          <dd class="font-semibold text-left">Kota Padang</dd>
+          <dd class="font-semibold text-left"><?= $pengguna['kabupaten'] ?? '-' ?></dd>
 
           <dt class="text-right font-normal">Join Sejak</dt>
-          <dd class="font-semibold text-left">Senin, 08 Juli 2024</dd>
+          <dd class="font-semibold text-left">
+    <?php if (!empty($pengguna['tanggal_daftar']) && $pengguna['tanggal_daftar'] !== '0000-00-00 00:00:00'): ?>
+        <?= date('l, d F Y', strtotime($pengguna['tanggal_daftar'])) ?>
+    <?php else: ?>
+        -
+    <?php endif; ?>
+</dd>
         </dl>
 
-        <a href="#" class="text-[#3b9adf] text-s font-semibold mt-4"
-          >Edit Data</a
-        >
+        <a href="/dashboard/account/edit" class="text-[#3b9adf] text-s font-semibold mt-4">Edit Data</a>
       </section>
     </main>
   </body>

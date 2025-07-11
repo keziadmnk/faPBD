@@ -33,19 +33,19 @@
       <div
         class="bg-white rounded-xl p-3 pl-6 flex gap-6 text-sm text-gray-700 font-normal mb-4 select-none"
       >
-        <a href="/dashboard/topuphistory">
+        <a href="/dashboard/user/topuphistory">
           <button class="hover:text-[#3b94d9] focus:outline-none">
             Top Up
           </button>
         </a>
 
-        <a href="/dashboard/voucherhistory">
+        <a href="/dashboard/user/voucherhistory">
           <button class="hover:text-[#3b94d9] focus:outline-none">
             Voucher
           </button>
         </a>
 
-        <a href="/dashboard/tryouthistory">
+        <a href="/dashboard/user/tryouthistory">
           <button
             class="text-[#3b94d9] border-b-2 border-[#3b94d9] pb-1 focus:outline-none"
           >
@@ -68,47 +68,22 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="bg-[#f3f3f3]">
-              <td class="px-6 py-4">Rp 20.000</td>
-              <td class="px-6 py-4">Sekdin 2025 (vol 1)</td>
-              <td class="px-6 py-4">2025-06-10 07:46:10</td>
-              <td class="px-6 py-4 text-[#3b94d9] cursor-pointer">
-                <a href="/16detail-tryout-history.html" class="hover:underline"
-                  >See detail</a
-                >
-              </td>
+          <?php if (empty($histori)): ?>
+            <tr class="bg-[#f3f3f3] text-center">
+              <td colspan="4" class="py-4">No Transaction</td>
             </tr>
-            <tr>
-              <td class="px-6 py-4">Rp 20.000</td>
-              <td class="px-6 py-4">Sekdin 2025 (vol 2)</td>
-              <td class="px-6 py-4">2025-06-10 07:47:21</td>
-              <td class="px-6 py-4 text-[#3b94d9] cursor-pointer">
-                <a href="/16detail-tryout-history.html" class="hover:underline"
-                  >See detail</a
-                >
-              </td>
-            </tr>
-            <tr class="bg-[#f3f3f3]">
-              <td class="px-6 py-4">Rp 20.000</td>
-              <td class="px-6 py-4">Sekdin 2025 (vol 3)</td>
-              <td class="px-6 py-4">2025-06-12 21:23:41</td>
-              <td class="px-6 py-4 text-[#3b94d9] cursor-pointer">
-                <a href="/16detail-tryout-history.html" class="hover:underline"
-                  >See detail</a
-                >
-              </td>
-            </tr>
-            <tr>
-              <td class="px-6 py-4">Rp 20.000</td>
-              <td class="px-6 py-4">CPNS 2025 (vol 1)</td>
-              <td class="px-6 py-4">2025-06-12 21:24:16</td>
-              <td class="px-6 py-4 text-[#3b94d9] cursor-pointer">
-                <a href="/16detail-tryout-history.html" class="hover:underline"
-                  >See detail</a
-                >
-              </td>
-            </tr>
-            
+          <?php else: ?>
+            <?php foreach ($histori as $t): ?>
+              <tr class="bg-[#f3f3f3]">
+                <td class="px-6 py-4">Rp <?= number_format($t['harga'] ?? 0, 0, ',', '.') ?></td>
+                <td class="px-6 py-4"><?= htmlspecialchars($t['nama_tryout'] ?? '-') ?></td>
+                <td class="px-6 py-4"><?= htmlspecialchars($t['tanggal_transaksi'] ?? '-') ?></td>
+                <td class="px-6 py-4 text-[#3b94d9] cursor-pointer">
+                  <a href="/dashboard/user/tryouthistory/detail/<?= $t['id_tryout'] ?>" class="hover:underline">Lihat detail</a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
           </tbody>
         </table>
       </section>

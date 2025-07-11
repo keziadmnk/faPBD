@@ -49,19 +49,24 @@
             </span>
         </div>
     </div>
+    <!-- Menampilkan pesan sukses jika ada -->
+    <?php if (session()->getFlashdata('success')): ?>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline"><?= session()->getFlashdata('success') ?></span>
+        </div>
+    <?php endif; ?>
     <!-- Menampilkan error jika ada -->
     <?php if (session()->getFlashdata('error')): ?>
         <div style="color: red;">
             <?= session()->getFlashdata('error') ?>
         </div>
     <?php endif; ?>
-  </form>
     <button
         class="w-full bg-[#3a9ad9] text-white text-sm font-normal py-3 rounded-full hover:bg-[#2e7cc1] transition-colors block text-center"
         type="submit">
         Login
     </button>
-
+</form>
     <p class="my-12 text-center text-sm text-[#4a4a4a]">
         Belum punya akun? <br> 
         <span>Ayo </span><a class="font-semibold underline" href="/daftar">Daftar Sekarang</a>

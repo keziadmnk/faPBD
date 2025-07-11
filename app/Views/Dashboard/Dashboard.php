@@ -38,7 +38,7 @@
                     <button
                         class="bg-[#3a9ad9] text-white text-sm rounded-full py-2 w-full"
                         type="button"
-                        onclick="window.location.href='/dashboard/tryout/<?= $kat['id_kategori'] ?>';"
+                        onclick="window.location.href='/dashboard/user/kategori/<?= $kat['id_kategori'] ?>';"
                     >
                         Pilih
                     </button>
